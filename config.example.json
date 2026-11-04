@@ -1,0 +1,7 @@
+{
+  "data_dir": "F:/",
+  "sample_sheet": "metadata/samples.csv",
+  "results_dir": "results",
+  "random_seed": 42,
+  "spectra_per_mouse": 24
+}

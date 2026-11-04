@@ -1,0 +1,13 @@
+measurement_id,animal_id,original_sample_id,age_group,imzml_filename,filename_date,supplied_record_date,exact_age,age_unit,sex,preparation_batch,acquisition_batch,section_id
+1465,Lux10,Lux 10,young,20260928_hearts_1465-13-total ion count.imzML,20260928,22.09.2006,,,,,,
+1466,Lux11,Lux 11,young,20260928_hearts_1466-9-total ion count.imzML,20260928,22.09.2006,,,,,,
+1467,Lux12,Lux 12,young,20260929_hearts_1467-14-total ion count.imzML,20260929,22.09.2006,,,,,,
+1468,Lux16,Lux 16,young,20260929_hearts_1468-11-total ion count.imzML,20260929,22.09.2006,,,,,,
+1469,Lux17,Lux 17,young,20260930_hearts_1469-11-total ion count.imzML,20260930,22.09.2006,,,,,,
+1470,Lux18,Lux 18,young,20260930_hearts_1470-11-total ion count.imzML,20260930,22.09.2006,,,,,,
+1471,Lux13,Lux 13,old,20261001_hearts_1471-11-total ion count.imzML,20261001,22.09.2006,,,,,,
+1472,Lux14,Lux 14,old,20261001_hearts_1472-12-total ion count.imzML,20261001,22.09.2006,,,,,,
+1473,Lux15,Lux 15,old,20261002_hearts_1473-11-total ion count.imzML,20261002,22.09.2006,,,,,,
+1474,Lux19,Lux 19,old,20261002_hearts_1474-11-total ion count.imzML,20261002,22.09.2006,,,,,,
+1475,Lux20,Lux 20,old,20261005_hearts_1475-14-total ion count.imzML,20261005,22.09.2006,,,,,,
+1476,Lux21,Lux 21,old,20261005_hearts_1476-11-total ion count.imzML,20261005,22.09.2006,,,,,,

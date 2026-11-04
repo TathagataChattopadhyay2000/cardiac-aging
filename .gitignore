@@ -1,0 +1,22 @@
+# Research data and local configuration
+*.ibd
+*.imzML
+*.imzml
+*.slx
+*.slx.*
+*.raw
+*.d/
+data/
+config.local.json
+.env
+# Generated artifacts
+results/*
+!results/.gitkeep
+.ipynb_checkpoints/
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
