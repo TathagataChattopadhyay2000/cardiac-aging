@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1119">
+  <title>MS/MS Target Finder</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="brand">
+      <div class="brandmark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M4 23h24M8 21v-4m5 4V9m5 12v-7m5 7V5"/></svg></div>
+      <div><div class="eyebrow">MALDI MSI WORKSPACE</div><h1>MS/MS Target Finder</h1></div>
+    </div>
+    <div class="header-actions"><span class="local"><i></i> Local session</span><button class="primary" id="open-study">Open study <span aria-hidden="true">↗</span></button></div>
+  </header>
+  <main>
+    <section class="study-strip" aria-label="Study status">
+      <div class="study-title"><div class="eyebrow">ACTIVE STUDY</div><strong id="study-name">No study loaded</strong></div>
+      <div class="stat"><span>Animals</span><strong id="animal-count">—</strong></div>
+      <div class="stat"><span>Measured pixels</span><strong id="pixel-count">—</strong></div>
+      <div class="stat"><span>Shared mass range</span><strong id="mass-range">—</strong></div>
+      <div class="stat"><span>Ranked intervals</span><strong id="window-count">—</strong></div>
+    </section>
+    <div id="operation" class="operation" hidden>
+      <div><strong id="operation-title">Processing</strong><span id="operation-message"></span></div>
+      <progress id="progress" max="1" value="0"></progress>
+      <button id="cancel-job">Cancel</button>
+    </div>
+    <div id="notice" class="notice" role="status" hidden></div>
+    <section class="workspace" aria-label="Candidate analysis">
+      <article class="panel rank-panel">
+        <div class="panel-heading"><div class="eyebrow">01 / DISCOVER</div><h2>Candidate ranking</h2><p>One maximum per animal in each mass interval.</p></div>
+        <div class="ranking-config">
+          <label>Reference<select id="reference" disabled></select></label>
+          <label>Comparison<select id="comparison" disabled></select></label>
+          <label class="width-field">Width <span>m/z</span><input id="bin-width" type="number" min=".05" max="50" step=".05" value="1" disabled></label>
+        </div>
+        <div class="filters">
+          <div class="segmented" id="direction" aria-label="Direction">
+            <button data-direction="up" class="active" aria-pressed="true">Higher</button><button data-direction="down" aria-pressed="false">Lower</button><button data-direction="all" aria-pressed="false">All</button>
+          </div>
+          <label class="check"><input id="stable" type="checkbox" checked> Stable</label>
+        </div>
+        <div class="rank-tools"><label class="sr-only" for="find-mass">Find a mass</label><input id="find-mass" inputmode="decimal" placeholder="Find m/z, e.g. 998.5"><span id="rank-count">0 matches</span></div>
+        <div class="rank-list">
+          <table aria-label="Ranked intervals"><thead><tr>
+            <th scope="col">Interval</th>
+            <th scope="col" title="Comparison minus reference"><button id="sort-gap">Δ max ↓</button></th>
+            <th scope="col" title="Standardized difference"><button id="sort-effect">Effect</button></th>
+            <th scope="col">Section</th>
+          </tr></thead><tbody id="rank-rows"></tbody></table>
+          <div id="rank-empty" class="empty compact">Open a study to rank mass intervals.</div>
+        </div>
+        <div class="panel-footer"><button id="more-rows" hidden>Show more</button><span>Δ = comparison − reference</span></div>
+      </article>
+
+      <article class="panel spectrum-panel">
+        <div class="panel-heading"><div class="eyebrow">02 / INSPECT</div><h2 id="interval-title">Native spectra</h2><p id="spectrum-subtitle">Select a candidate to compare its peak heights.</p></div>
+        <div class="legend" id="legend"></div>
+        <div class="chart-toolbar"><span>Drag to select · Scroll to zoom</span><button id="reset-view" disabled>Reset view</button></div>
+        <div id="spectrum" class="chart main-chart"><div class="empty">The native traces will appear here.</div></div>
+        <form id="interval-form" class="interval-form">
+          <label>From <input id="interval-lo" type="number" step="any" required disabled></label>
+          <label>To <input id="interval-hi" type="number" step="any" required disabled></label>
+          <button id="compare-custom" disabled>Compare</button>
+        </form>
+        <div class="split-label"><span class="eyebrow">ANIMAL MAXIMA</span><strong id="interval-gap">—</strong></div>
+        <div id="points" class="chart points-chart"><div class="empty compact">Each point represents one animal.</div></div>
+        <details class="animal-details"><summary>Show individual values</summary><div id="animal-values"></div></details>
+      </article>
+
+      <article class="panel tissue-panel">
+        <div class="panel-heading"><div class="eyebrow">03 / LOCATE</div><h2>Tissue targeting</h2><p>Inspect the signal at a measured spot.</p></div>
+        <label class="section-field">Section<select id="section" disabled></select></label>
+        <div class="target-config">
+          <label>Precursor m/z<input id="precursor" type="number" step="any" disabled></label>
+          <label>Isolation width<input id="isolation" type="number" step="any" min=".05" max="50" value="2.2"></label>
+        </div>
+        <div class="target-config">
+          <label>Map from m/z<input id="map-lo" type="number" step="any" disabled></label>
+          <label>Map to m/z<input id="map-hi" type="number" step="any" disabled></label>
+        </div>
+        <button class="map-button" id="build-map" disabled>Generate ion map <span aria-hidden="true">↗</span></button>
+        <div id="map-area" class="map-area"><div id="map-empty" class="empty">Generate a map from the raw MSI export.</div><canvas id="ion-map" aria-label="Ion map. Click a measured pixel to inspect its spectrum." tabindex="0" hidden></canvas></div>
+        <div class="map-footer"><span id="map-scale">Summed native intensity</span><span id="coordinates">—</span></div>
+        <details id="histology-tools" class="animal-details" hidden><summary>Histology overlay</summary>
+          <div class="target-config"><label>Histology image<input id="histology-image" type="file" accept="image/*"></label>
+          <label>Registration JSON<input id="histology-transform" type="file" accept=".json"></label></div>
+          <label class="check"><input type="checkbox" id="show-histology" disabled> Show registered image</label>
+          <p class="help">Use a transform for this section that maps imzML coordinates to image pixels.</p>
+        </details>
+        <div class="split-label"><span class="eyebrow">LOCAL SPECTRUM</span><span id="isolation-label">Full isolation width</span></div>
+        <div id="local-spectrum" class="chart local-chart"><div class="empty compact">Select a measured spot.</div></div>
+        <div id="local-peaks" class="local-peaks"></div>
+        <button class="primary pin-button" id="pin" disabled>＋ Pin target to shortlist</button>
+      </article>
+    </section>
+
+    <section class="panel shortlist-panel">
+      <div class="shortlist-header"><div><div class="eyebrow">04 / HANDOFF</div><h2>Lab shortlist <span class="badge" id="pin-count">0</span></h2></div><button id="export" disabled>Export target sheet <span aria-hidden="true">↓</span></button></div>
+      <div id="shortlist" class="shortlist"><div class="empty compact">Pin a precursor and tissue spot to start the shortlist.</div></div>
+    </section>
+    <footer>Exploratory MSI analysis <span>•</span> Confirm proposed precursor settings and slide coordinates with the instrument operator.</footer>
+  </main>
+
+  <dialog id="study-dialog">
+    <form id="study-form">
+      <div class="dialog-heading"><div><div class="eyebrow">LOCAL DATA</div><h2>Open an MSI study</h2></div><button id="close-study" type="button" aria-label="Close">×</button></div>
+      <p>Choose a folder of paired imzML and ibd files and a CSV that links each section to its animal and group.</p>
+      <label for="data-path">MSI export folder</label>
+      <div class="path-control"><input id="data-path" required placeholder="F:/ or a local folder"><button type="button" data-pick="data">Browse</button></div>
+      <label for="sheet-path">Sample sheet CSV</label>
+      <div class="path-control"><input id="sheet-path" required placeholder="Path to samples.csv"><button type="button" data-pick="sheet">Browse</button></div>
+      <details><summary>Cache and sample sheet options</summary>
+        <label for="legacy-path">Existing native spectrum cache (optional)</label>
+        <div class="path-control"><input id="legacy-path" placeholder="Folder with per-measurement NPZ files"><button type="button" data-pick="legacy">Browse</button></div>
+        <p class="help">Columns: <code>measurement_id</code>, <code>imzml_filename</code>, <code>group</code> or <code>age_group</code>. Optional: <code>animal_id</code>, <code>section_id</code>. Use one export per animal.</p>
+      </details>
+      <p id="dialog-error" role="status" class="error"></p>
+      <div class="dialog-actions"><button class="primary" type="submit">Load and rank study <span aria-hidden="true">→</span></button></div>
+    </form>
+  </dialog>
+</body>
+</html>
