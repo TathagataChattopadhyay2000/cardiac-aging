@@ -1,7 +1,15 @@
 "use strict";
 
 const $ = (id) => document.getElementById(id);
-const colors = ["#52e1ca", "#ffb968"];
+const theme = getComputedStyle(document.documentElement);
+const themeColor = (name) => theme.getPropertyValue(name).trim();
+const colors = [themeColor("--reference"), themeColor("--comparison")];
+const chartPalette = {
+  paper: themeColor("--surface"),
+  rule: themeColor("--edge"),
+  label: themeColor("--muted"),
+  selection: themeColor("--accent"),
+};
 const state = {study: null, rows: [], direction: "up", sort: "gap", limit: 35,
   selected: null, view: null, detail: null, map: null, local: null, overlay: null,
   pins: [], busy: false, detailVersion: 0, rankVersion: 0, localVersion: 0};
@@ -72,15 +80,16 @@ function clearMap() {
   state.map = state.local = state.overlay = null;
   $("ion-map").hidden = true;
   $("map-empty").hidden = false;
+  $("map-readout").hidden = true;
   $("histology-tools").hidden = true;
   $("show-histology").checked = false;
   $("show-histology").disabled = true;
   $("histology-image").value = $("histology-transform").value = "";
-  $("local-spectrum").innerHTML = empty("Select a measured spot.");
+  $("local-spectrum").innerHTML = empty("Build the map to see the spectrum at a selected spot.");
   $("local-peaks").textContent = "";
-  $("coordinates").textContent = "—";
-  $("map-scale").textContent = "Summed native intensity";
-  $("isolation-label").textContent = "Full isolation width";
+  $("coordinates").textContent = "";
+  $("map-scale").textContent = "";
+  $("isolation-label").textContent = "";
   updateControls();
 }
 
@@ -265,15 +274,15 @@ function chart({traces, domain, shade, center, marks = [], local = false}) {
   maxY += (maxY - minY) * .08;
   const x = (v) => f.left + (v - lo) / (hi - lo) * (f.w - f.left - f.right);
   const y = (v) => f.h - f.bottom - (v - minY) / (maxY - minY) * (f.h - f.top - f.bottom);
-  const line = (x1, y1, x2, y2, color = "#26394c", extra = "") =>
+  const line = (x1, y1, x2, y2, color = chartPalette.rule, extra = "") =>
     '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + color + '" ' + extra + "/>";
   const text = (xx, yy, label, anchor = "middle") => '<text x="' + xx + '" y="' + yy +
-    '" text-anchor="' + anchor + '" fill="#9eb1c6" font-size="12" font-family="monospace">' + esc(label) + "</text>";
-  let body = '<rect width="100%" height="100%" fill="#0b1520"/>';
+    '" text-anchor="' + anchor + '" fill="' + chartPalette.label + '" font-size="12" font-family="monospace">' + esc(label) + "</text>";
+  let body = '<rect width="100%" height="100%" fill="' + chartPalette.paper + '"/>';
   if (shade) {
     const start = Math.max(lo, shade[0]), end = Math.min(hi, shade[1]);
     if (end > start) body += '<rect x="' + x(start) + '" y="' + f.top + '" width="' + (x(end) - x(start)) +
-      '" height="' + (f.h - f.top - f.bottom) + '" fill="#52e1ca" fill-opacity=".12"/>';
+      '" height="' + (f.h - f.top - f.bottom) + '" fill="' + chartPalette.selection + '" fill-opacity=".10"/>';
   }
   for (let i = 0; i <= 4; i++) {
     const xx = lo + (hi - lo) * i / 4;
@@ -287,7 +296,7 @@ function chart({traces, domain, shade, center, marks = [], local = false}) {
     body += '<path d="' + path + '" fill="none" stroke="' + t.color + '" stroke-width="' +
       (local ? 2.2 : 1.5) + '" opacity="' + (local ? 1 : .67) + '"/>';
   }
-  if (center >= lo && center <= hi) body += line(x(center), f.top, x(center), f.h - f.bottom, "#ffb968", 'stroke-dasharray="4 4"');
+  if (center >= lo && center <= hi) body += line(x(center), f.top, x(center), f.h - f.bottom, colors[1], 'stroke-dasharray="4 4"');
   for (const p of marks) if (p.apex >= lo && p.apex <= hi && p.height <= maxY && p.height >= minY) {
     body += '<circle cx="' + x(p.apex) + '" cy="' + y(p.height) + '" r="3.7" fill="' + p.color + '"><title>' +
       esc(p.id + " · " + fmt(p.apex) + " m/z · " + fmt(p.height)) + "</title></circle>";
@@ -322,8 +331,8 @@ function renderSpectra() {
     if (!rect) {
       rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
       rect.setAttribute("class", "brush");
-      rect.setAttribute("fill", "#52e1ca");
-      rect.setAttribute("fill-opacity", ".28");
+      rect.setAttribute("fill", chartPalette.selection);
+      rect.setAttribute("fill-opacity", ".22");
       rect.setAttribute("y", frame.top);
       rect.setAttribute("height", frame.h - frame.top - frame.bottom);
       svg.append(rect);
@@ -362,12 +371,12 @@ function renderPoints() {
   const pad = Math.max((max - min) * .13, Math.abs(max) * .03, .0001);
   const lo = min - pad, hi = max + pad;
   const x = (n) => 62 + (n - lo) / (hi - lo) * 490;
-  let svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 120" role="img" aria-label="Individual maximum intensities"><rect width="100%" height="100%" fill="#0b1520"/>';
+  let svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 120" role="img" aria-label="Individual maximum intensities"><rect width="100%" height="100%" fill="' + chartPalette.paper + '"/>';
   const label = (xx, yy, value, anchor = "middle") => '<text x="' + xx + '" y="' + yy +
-    '" text-anchor="' + anchor + '" fill="#9eb1c6" font-size="12" font-family="monospace">' + esc(value) + "</text>";
+    '" text-anchor="' + anchor + '" fill="' + chartPalette.label + '" font-size="12" font-family="monospace">' + esc(value) + "</text>";
   for (let i = 0; i <= 4; i++) {
     const v = lo + (hi - lo) * i / 4, xx = x(v);
-    svg += '<path d="M' + xx + ' 12V91" stroke="#26394c"/>' + label(xx, 107, fmt(v, 2));
+    svg += '<path d="M' + xx + ' 12V91" stroke="' + chartPalette.rule + '"/>' + label(xx, 107, fmt(v, 2));
   }
   [$("reference").value, $("comparison").value].forEach((group, i) => {
     const yy = 32 + i * 36;
@@ -387,18 +396,20 @@ async function generateMap() {
   const chosen = state.selected;
   const sample = $("section").value;
   const lo = Number($("map-lo").value), hi = Number($("map-hi").value);
-  if (!Number.isFinite(lo) || !Number.isFinite(hi) || lo >= hi) return notice("Enter increasing map bounds.", true);
+  if (!Number.isFinite(lo) || !Number.isFinite(hi) || lo >= hi)
+    return notice("Enter a Map from value smaller than Map to.", true);
   clearMap();
   try {
-    const map = await job("map", {study: state.study.key, sample, lo, hi}, "Building ion map");
+    const map = await job("map", {study: state.study.key, sample, lo, hi}, "Building signal map");
     if (chosen !== state.selected || sample !== $("section").value ||
         lo !== Number($("map-lo").value) || hi !== Number($("map-hi").value)) return;
     state.map = map;
     state.spot = map.spot;
     $("map-empty").hidden = true;
     $("ion-map").hidden = false;
+    $("map-readout").hidden = false;
     $("histology-tools").hidden = false;
-    $("map-scale").textContent = fmt(map.low, 2) + "–" + fmt(map.high, 2) + " · 2–98% scale";
+    $("map-scale").textContent = "Color scale " + fmt(map.low, 2) + "–" + fmt(map.high, 2) + " (2nd–98th percentile)";
     renderMap();
     await readSpot(map.spot);
   } catch (error) { notice(error.message, error.message !== "Cancelled."); }
@@ -413,7 +424,7 @@ function renderMap() {
   canvas.width = m.width * scale;
   canvas.height = m.height * scale;
   const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#0b1520";
+  ctx.fillStyle = chartPalette.paper;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   const overlay = state.overlay && $("show-histology").checked;
   if (overlay) {
@@ -452,7 +463,7 @@ function renderMap() {
   ctx.beginPath();
   ctx.moveTo(x - r, y); ctx.lineTo(x + r, y); ctx.moveTo(x, y - r); ctx.lineTo(x, y + r);
   ctx.lineWidth = 4;
-  ctx.strokeStyle = "#091421";
+  ctx.strokeStyle = "#2e261f";
   ctx.stroke();
   ctx.lineWidth = 1.9;
   ctx.strokeStyle = "#ffffff";
@@ -464,30 +475,31 @@ async function readSpot(spot) {
   const version = ++state.localVersion;
   state.spot = spot;
   state.local = null;
-  $("coordinates").textContent = "x " + spot.x + " · y " + spot.y;
+  $("coordinates").textContent = "Selected spot · x " + spot.x + " · y " + spot.y;
   $("coordinates").title = spot.method || "User-selected measured pixel";
-  $("local-spectrum").innerHTML = empty("Reading local spectrum…");
+  $("local-spectrum").innerHTML = empty("Reading spectrum at this spot…");
+  $("isolation-label").textContent = "";
   $("local-peaks").textContent = "";
   renderMap();
   updateControls();
   try {
     const center = Number($("precursor").value), isolation = Number($("isolation").value);
     if (!Number.isFinite(center) || !$("precursor").value || isolation < .05 || isolation > 50)
-      throw new Error("Enter a precursor and a full isolation width of 0.05–50 m/z.");
+      throw new Error("Enter a target m/z and an isolation width of 0.05–50 m/z.");
     const radius = Math.max(.65, isolation * .65);
     const lo = center - radius, hi = center + radius;
     const local = await api("local", {study: state.study.key, sample: state.map.sample,
       x: spot.x, y: spot.y, center, isolation, lo, hi});
     if (version !== state.localVersion) return;
     state.local = {...local, center, width: isolation};
-    $("isolation-label").textContent = "Isolation " + local.isolation.map((m) => fmt(m, 2)).join("–");
+    $("isolation-label").textContent = "Shaded window " + local.isolation.map((m) => fmt(m, 2)).join("–") + " m/z";
     $("local-spectrum").innerHTML = chart({
       traces: [{x: local.mass, y: local.intensity, color: colors[0]}],
       domain: [lo, hi], shade: local.isolation, center, local: true,
     });
     $("local-peaks").textContent = local.peaks.length ?
-      "Local maxima in isolation range: " + local.peaks.map((p) => fmt(p.mz)).join(", ") :
-      "No local maxima detected inside the isolation range.";
+      "Strongest peaks in the shaded window (m/z): " + local.peaks.map((p) => fmt(p.mz)).join(", ") :
+      "No peaks detected inside the shaded window.";
     updateControls();
   } catch (error) {
     if (version === state.localVersion) $("local-spectrum").innerHTML = empty(error.message);
@@ -526,7 +538,7 @@ async function loadOverlay() {
 function renderPins() {
   $("pin-count").textContent = state.pins.length;
   $("export").disabled = state.pins.length === 0;
-  $("shortlist").innerHTML = state.pins.length ? "" : empty("Pin a precursor and tissue spot to start the shortlist.");
+  $("shortlist").innerHTML = state.pins.length ? "" : empty("Saved spots and their target m/z will appear here.");
   state.pins.forEach((pin, index) => {
     const card = document.createElement("article");
     card.className = "pin-card";
@@ -590,10 +602,10 @@ function exportPins() {
     p.values.map((v) => "<tr><td>" + esc(v.id) + "</td><td>" + esc(v.group) + "</td><td>" + fmt(v.apex) +
       "</td><td>" + fmt(v.height) + "</td></tr>").join("") + "</tbody></table></details></article>").join("");
   const html = '<!doctype html><html lang="en"><meta charset="utf-8"><title>MS/MS target sheet</title>' +
-    '<style>body{font:15px/1.5 system-ui,sans-serif;max-width:1040px;margin:32px auto;padding:0 18px;color:#172639}' +
-    'article{border:1px solid #bdc9d3;border-radius:10px;padding:14px 20px;margin:16px 0;break-inside:avoid}' +
+    '<style>body{font:15px/1.5 system-ui,sans-serif;max-width:1040px;margin:32px auto;padding:0 18px;color:#2e261f}' +
+    'h1,h2{font-family:Georgia,serif;font-weight:500}article{border:1px solid #d9cdbb;border-radius:8px;padding:14px 20px;margin:16px 0;break-inside:avoid}' +
     '.plots{display:grid;grid-template-columns:1fr 1.4fr;gap:16px}figure{margin:8px 0}img,svg{display:block;width:100%;max-height:290px;object-fit:contain}' +
-    'figcaption{color:#475a70;font-size:13px}th,td{text-align:left;padding:4px 12px;border-bottom:1px solid #ddd}' +
+    'figcaption{color:#65584c;font-size:13px}th,td{text-align:left;padding:4px 12px;border-bottom:1px solid #eae1d4}' +
     '@media(max-width:600px){.plots{display:block}}</style><h1>MS/MS target sheet</h1><p>Study: ' + esc(state.study.label) +
     "</p><p>Review precursor identity, isolation settings, slide availability, and coordinate transfer with the instrument operator.</p>" +
     cards + "</html>";

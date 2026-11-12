@@ -1,4 +1,4 @@
-# MS/MS Target Finder
+# MS Target Finder
 
 Double-click **Start App.cmd**. The browser opens at http://127.0.0.1:8765/.
 Keep the console open while using the app. Press Ctrl+C in the console to

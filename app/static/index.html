@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b1119">
-  <title>MS/MS Target Finder</title>
+  <meta name="theme-color" content="#242527">
+  <title>MS Target Finder</title>
   <link rel="stylesheet" href="/styles.css">
   <script src="/app.js" defer></script>
 </head>
@@ -12,7 +12,7 @@
   <header class="masthead">
     <div class="brand">
       <div class="brandmark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M4 23h24M8 21v-4m5 4V9m5 12v-7m5 7V5"/></svg></div>
-      <div><div class="eyebrow">MALDI MSI WORKSPACE</div><h1>MS/MS Target Finder</h1></div>
+      <h1>MS Target Finder</h1>
     </div>
     <div class="header-actions"><span class="local"><i></i> Local session</span><button class="primary" id="open-study">Open study <span aria-hidden="true">↗</span></button></div>
   </header>
@@ -73,35 +73,42 @@
       </article>
 
       <article class="panel tissue-panel">
-        <div class="panel-heading"><div class="eyebrow">03 / LOCATE</div><h2>Tissue targeting</h2><p>Inspect the signal at a measured spot.</p></div>
-        <label class="section-field">Section<select id="section" disabled></select></label>
+        <div class="panel-heading"><h2>Find a spot for the lab</h2><p>Find where a signal is strong and check which peaks the lab might isolate there.</p></div>
+        <h3 class="target-heading">Make a signal map</h3>
+        <label class="section-field">Tissue section<select id="section" disabled></select></label>
         <div class="target-config">
-          <label>Precursor m/z<input id="precursor" type="number" step="any" disabled></label>
-          <label>Isolation width<input id="isolation" type="number" step="any" min=".05" max="50" value="2.2"></label>
+          <label>Map from (m/z)<input id="map-lo" type="number" step="any" aria-describedby="map-help" disabled></label>
+          <label>Map to (m/z)<input id="map-hi" type="number" step="any" aria-describedby="map-help" disabled></label>
         </div>
-        <div class="target-config">
-          <label>Map from m/z<input id="map-lo" type="number" step="any" disabled></label>
-          <label>Map to m/z<input id="map-hi" type="number" step="any" disabled></label>
+        <p class="target-help" id="map-help">Brighter colors show a stronger signal within these m/z bounds.</p>
+        <button class="map-button" id="build-map" disabled>Build signal map <span aria-hidden="true">↗</span></button>
+        <div id="map-area" class="map-area"><div id="map-empty" class="empty">The signal map will appear here.</div><canvas id="ion-map" aria-label="Signal map" aria-describedby="spot-help" tabindex="0" hidden></canvas></div>
+        <div id="map-readout" hidden>
+          <div class="map-footer"><span id="map-scale"></span><span id="coordinates" role="status"></span></div>
+          <p class="target-help" id="spot-help">The crosshair marks the selected spot. Click the map to try another spot.</p>
         </div>
-        <button class="map-button" id="build-map" disabled>Generate ion map <span aria-hidden="true">↗</span></button>
-        <div id="map-area" class="map-area"><div id="map-empty" class="empty">Generate a map from the raw MSI export.</div><canvas id="ion-map" aria-label="Ion map. Click a measured pixel to inspect its spectrum." tabindex="0" hidden></canvas></div>
-        <div class="map-footer"><span id="map-scale">Summed native intensity</span><span id="coordinates">—</span></div>
         <details id="histology-tools" class="animal-details" hidden><summary>Histology overlay</summary>
           <div class="target-config"><label>Histology image<input id="histology-image" type="file" accept="image/*"></label>
           <label>Registration JSON<input id="histology-transform" type="file" accept=".json"></label></div>
           <label class="check"><input type="checkbox" id="show-histology" disabled> Show registered image</label>
           <p class="help">Use a transform for this section that maps imzML coordinates to image pixels.</p>
         </details>
-        <div class="split-label"><span class="eyebrow">LOCAL SPECTRUM</span><span id="isolation-label">Full isolation width</span></div>
-        <div id="local-spectrum" class="chart local-chart"><div class="empty compact">Select a measured spot.</div></div>
+        <h3 class="target-heading spot-heading">Check the spectrum at that spot</h3>
+        <div class="target-config">
+          <label>Target m/z (precursor)<input id="precursor" type="number" step="any" aria-describedby="isolation-help" disabled></label>
+          <label>Isolation width (m/z)<input id="isolation" type="number" step="any" min=".05" max="50" value="2.2" aria-describedby="isolation-help"></label>
+        </div>
+        <p class="target-help" id="isolation-help">The target m/z is the center of the shaded window. The width is the full span. Peaks inside may be isolated together for fragmentation.</p>
+        <p class="target-help" id="isolation-label"></p>
+        <div id="local-spectrum" class="chart local-chart"><div class="empty compact">Build the map to see the spectrum at a selected spot.</div></div>
         <div id="local-peaks" class="local-peaks"></div>
-        <button class="primary pin-button" id="pin" disabled>＋ Pin target to shortlist</button>
+        <button class="primary pin-button" id="pin" disabled>Save this spot to the lab shortlist</button>
       </article>
     </section>
 
     <section class="panel shortlist-panel">
       <div class="shortlist-header"><div><div class="eyebrow">04 / HANDOFF</div><h2>Lab shortlist <span class="badge" id="pin-count">0</span></h2></div><button id="export" disabled>Export target sheet <span aria-hidden="true">↓</span></button></div>
-      <div id="shortlist" class="shortlist"><div class="empty compact">Pin a precursor and tissue spot to start the shortlist.</div></div>
+      <div id="shortlist" class="shortlist"><div class="empty compact">Saved spots and their target m/z will appear here.</div></div>
     </section>
     <footer>Exploratory MSI analysis <span>•</span> Confirm proposed precursor settings and slide coordinates with the instrument operator.</footer>
   </main>

@@ -1,4 +1,4 @@
-"""Run the MS/MS Target Finder on the user's computer."""
+"""Run the MS Target Finder on the user's computer."""
 import argparse
 import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -227,7 +227,7 @@ def main():
         parser.exit(1, f"Could not start the local app on port {args.port}: {error}\n")
     server.state = State(root, args.cache or root / "results/msms_target_finder/cache")
     url = f"http://127.0.0.1:{server.server_port}"
-    print(f"MS/MS Target Finder · {url}\nKeep this window open while using the app.", flush=True)
+    print(f"MS Target Finder · {url}\nKeep this window open while using the app.", flush=True)
     if not args.no_browser:
         threading.Thread(target=webbrowser.open, args=(url,), daemon=True).start()
     try:
